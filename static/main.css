@@ -10,3 +10,8 @@ body {
 .blog-content {margin-top: 2rem;}
 
 .content {font-size: 18px; line-height: 24px;}
+
+.error, .success {display:block;}
+
+.success {background-color: #dff0d8;}
+.error {background-color: #f2dede;}

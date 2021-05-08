@@ -3,9 +3,10 @@ DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS settings;
 
 CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  username VARCHAR(255),
-  email VARCHAR(255)
+  user_id SERIAL PRIMARY KEY,
+  user_name VARCHAR(255) NOT NULL,
+  user_email VARCHAR(255) NOT NULL,
+  user_password VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE posts (

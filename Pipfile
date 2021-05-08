@@ -10,6 +10,7 @@ psycopg2 = "*"
 authlib = "*"
 flask-sqlalchemy = "*"
 python-dotenv = "*"
+requests = "*"
 
 [dev-packages]
 

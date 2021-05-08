@@ -14,19 +14,19 @@
             <i class="fas fa-rss"></i>
           </a>
         </li>
-        <li class="navbar-item"><a href="#" class="nav-link">Users</a></li>
         <li class="navbar-item"><a href="#" class="nav-link">Posts</a></li>
         <li class="navbar-item"><a href="{{url_for('new_post')}}" class="nav-link">New Post</a></li>
         <li class="navbar-item"><a href="#" class="nav-link">Settings</a></li>
-        {% if session.user %}
+        {% if session.profile %}
+        <li class="navbar-item"><a href="{{url_for('profile')}}" class="nav-link">Profile</a></li>
         <li class="navbar-item"><a href="{{url_for('logout')}}" class="nav-link">Logout</a></li>
         {% else %}
         <li class="navbar-item"><a href="{{url_for('login')}}" class="nav-link">Login</a></li>
+        <li class="navbar-item"><a href="{{url_for('signup')}}" class="nav-link">Sign Up</a></li>
         {% endif %}
       </ul>
       <form method="post" action="" class="d-flex">
         <input class="form-control me-2" type="search" name="query" placeholder="Search" aria-label="search"/>
-        <input type="hidden" name="_csrf_token" value="" />
         <button class="btn btn-outline-primary" type="submit">Search</button>
       </form>
     </div>
