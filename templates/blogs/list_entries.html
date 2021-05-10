@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content_title %}{{content_title}}{% endblock %}
+
+{% block content %}
+  {% if entries %}
+    <table class="table table-bordered table-striped table-hover">
+      <thead>
+        <tr class="table-dark">
+          <th scope="col">Title</th>
+          <th scope="col">Created</th>
+          <th scope="col">Published</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr>
+          <td>{{entry['title']}}</td>
+          <td>{{entry['created'].strftime('%m/%d/%Y %H:%M:%S %Z')}}</td>
+          <td>{% if entry['published'] %}Yes{% else %}No{% endif %}</td>
+          <td>
+            {% if entry['published'] %}<a href="{{url_for('entry_detail', slug=entry['slug'])}}">Preview</a> |{% endif %}
+            <a href="{{url_for('edit_entry', slug=entry.slug)}}">Edit</a> |
+            <a href="#">Delete <span><i class="fas fa-trash"></i></span></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "blogs/new_entry.html" %}
+
+{% block content_title %}Edit Entry{% endblock %}
+
+{% block form_action %}{{url_for('edit_entry', slug=entry.slug)}}{% endblock %}
+
+{% block save_button %}Save Changes{% endblock %}

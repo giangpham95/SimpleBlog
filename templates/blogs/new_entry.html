@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content_title %}New Entry{% endblock %}
+
+{% block content %}
+  <form class="needs_validation" method="POST" action="{% block form_action %}{{url_for('new_entry')}}{% endblock %}">
+    <div class="row mb-3">
+      <label for="title" class="col-sm-2 col-form-label">Title</label>
+      <div class="col-sm-10">
+        <input type="text" class="form-control" name="title" id="title" value="{% if entry %}{{entry['title']}}{%else%}{{request.form['title']}}{% endif %}">
+        <div class="invalid-feedback">
+          Title is required
+        </div>
+      </div>
+    </div>
+    <div class="row mb-3">
+      <label for="content" class="col-sm-2 col-form-label">Content</label>
+      <div class="col-sm-10">
+        <textarea type="text" class="form-control" name="content" id="content" rows="10">{% if entry %}{{ entry['content'] }}{% else %}{{ request.form['content'] }}{% endif %}</textarea>
+        <div class="invalid-feedback">
+          Content cannot be empty
+        </div>
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-sm-10 offset-sm-2">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="published" id="published" {% if entry and entry['published']%}checked="checked"{% endif %}>
+          <label class="form-check-label" for="published">
+            Published?
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-3">
+      <div class="col-sm-10 offset-sm-2">
+        <button type="submit" class="btn btn-primary">{% block save_button %}Save{% endblock %}</button>
+        <a class="btn btn-danger" href="{{url_for('index')}}">Cancel</a>
+      </div>
+    </div>
+  </form>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content_title %}{{entry.title}}{% endblock %}
+
+{% block extra_header %}
+  {% if session.user %}
+    <li><a href="{{ url_for('edit_entry', slug=entry.slug) }}">Edit entry</a></li>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<p>Created {{entry.created.strftime('%m/%d/%Y at %I:%M%p') }}</p>
+{{entry.content}}
+{% endblock %}

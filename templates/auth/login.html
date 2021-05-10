@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  {% include 'head.html' %}
+  <body>
+    <div class="container h-100">
+      <div class="row justify-content-center align-items-center h-100">
+        <div class="col-sm-9 col-md-7 col-lg-5">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="card-title text-center">
+                <h3 class="mb-5">Log In</h3>
+              </div>
+              {% for category, message in get_flashed_messages(with_categories=True) %}
+              <div class="alert alert-{{category}} alert-dismissable fade show" role="alert">
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <p>{{message}}</p>
+              </div>
+              {% endfor %}
+              <form class="form needs_validation" role="form" method="POST">
+                <div class="mb-3">
+                  <label for="login_username" class="form-label">Username Or Email Adress <span>*</span></label>
+                  <input type="text" class="form-control form-control-lg" name="login_username" id="login_username" required autocomplete="off" placeholder="Username or Email Address">
+                  <div class="invalid-feedback">
+                    Username or Email Address is required
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="login-password" class="form-label">Password <span>*</span> </label>
+                  <input type="password" class="form-control form-control-lg" name="login_password" id="login_password" required autocomplete="off" placeholder="Password">
+                  <div class="invalid-feedback">
+                    Password is required
+                  </div>
+                </div>
+                <div class="d-grid mb-3">
+                  <input type="submit" class="btn btn-primary">
+                </div>
+              </form>
+              <p class="text-center">Do Not Have Account? <span><a href="{{url_for('register')}}">Register</a></span></p>
+              <p class="text-center">Go Back To Home Page? <span><a href="{{url_for('index')}}">Blog Entries</a></span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% block script %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8" crossorigin="anonymous"></script>
+    {% endblock %}
+  </body>
+</html>

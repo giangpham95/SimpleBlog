@@ -16,6 +16,7 @@ Admin Password: admin
 + [Flask](https://flask.palletsprojects.com/en/1.1.x/)
 + [Bootstrap 5](https://blog.getbootstrap.com/2021/05/05/bootstrap-5/)
 + [PostgreSQL](https://www.postgresql.org/) (Heroku Postgres)
++ [Gravatar](https://en.gravatar.com/)
 
 ## Features
 
