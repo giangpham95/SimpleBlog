@@ -48,9 +48,9 @@ def update_blog_entry(doc_id, title, content, published):
   # Save to database
   updated_entry = None
   with get_db_cursor(commit=True) as cur:
-    cur.execute('UPDATE entries title=%s, content=%s, slug=%s, published=%s RETURNING *;', (title, content, slug, published))
+    cur.execute('UPDATE entries SET title=%s, content=%s, slug=%s, published=%s WHERE id = %s RETURNING *;', (title, content, slug, published, doc_id))
     updated_entry = cur.fetchone()
-    cur.execute('UPDATE fts_entries doc_id=%s, search_content=%s;', (doc_id, search_content))
+    cur.execute('UPDATE fts_entries SET search_content=%s WHERE doc_id = %s;', (search_content, doc_id,))
     response['data'] = updated_entry
   return response
 
@@ -60,9 +60,9 @@ def get_all_published_entries(author_id=None):
   entries = None
   with get_db_cursor() as cur:
     if author_id:
-      cur.execute("SELECT title, content, slug, published, created, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE published = %s AND author_id = %s ORDER BY created DESC;", (True, author_id))
+      cur.execute("SELECT entries.id, title, content, slug, published, created, author_id, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE published = %s AND author_id = %s ORDER BY created DESC;", (True, author_id))
     else:
-      cur.execute("SELECT title, content, slug, published, created, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE published = %s ORDER BY created DESC;", (True,))
+      cur.execute("SELECT entries.id, title, content, slug, published, created, author_id, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE published = %s ORDER BY created DESC;", (True,))
     entries = cur.fetchall()
     response['data'] = entries 
   return response
@@ -71,7 +71,7 @@ def get_all_draft_entries(author_id):
   response = {'error': None, 'data': None}
   entries = None
   with get_db_cursor() as cur:
-    cur.execute("SELECT title, content, slug, published, created, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE published = %s AND author_id = %s ORDER BY created DESC;", (False, author_id,))
+    cur.execute("SELECT entries.id, title, content, slug, published, created, author_id, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE published = %s AND author_id = %s ORDER BY created DESC;", (False, author_id,))
     entries = cur.fetchall()
     response['data'] = entries 
   return response
@@ -81,9 +81,9 @@ def get_all_entries(author_id=None):
   entries = None
   with get_db_cursor() as cur:
     if author_id:
-      cur.execute("SELECT title, content, slug, published, created, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE author_id = %s ORDER BY created DESC;", (author_id,))
+      cur.execute("SELECT entries.id, title, content, slug, published, created, author_id, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE author_id = %s ORDER BY created DESC;", (author_id,))
     else:
-      cur.execute("SELECT title, content, slug, published, created, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE ORDER BY created DESC;")
+      cur.execute("SELECT entries.id, title, content, slug, published, created, author_id, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE ORDER BY created DESC;")
     entries = cur.fetchall()
     response['data'] = entries 
   return response
@@ -92,7 +92,7 @@ def get_blog_entry_by_slug(slug):
   response = {'error': None, 'data': None}
   entry = None
   with get_db_cursor() as cur:
-    cur.execute("SELECT title, content, slug, published, created, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE slug=%s;", (slug,))
+    cur.execute("SELECT entries.id, title, content, slug, published, created, author_id, users.nickname as author_name FROM entries INNER JOIN users ON entries.author_id = users.id WHERE slug=%s;", (slug,))
     entry = cur.fetchone()
   
   if entry is None:
@@ -102,104 +102,10 @@ def get_blog_entry_by_slug(slug):
     response['data'] = entry
     return response
 
-class BlogManager(object):
-  def __init__(self) -> None:
-    super().__init__()
-    self.response = {'error': None, 'data': None}
-
-  def new_entry(self, entry_data):
-    self.response['error'] = None
-    if not entry_data['slug']:
-      entry_data['slug'] = re.sub('[^\w]+', '-', entry_data['title'].lower())
-    search_content = '\n'.join((entry_data['title'], entry_data['content']))
-    with get_db_cursor(commit=True) as cur:
-      try:
-        cur.execute('INSERT INTO entries (title, slug, content, author_id) VALUES (%s, %s, %s, %s) RETURNING id;', (entry_data['title'], entry_data['slug'], entry_data['content'], entry_data['author_id']))
-        doc_id = cur.fetchone()[0]
-        cur.execute('INSERT INTO fts_entries (doc_id, search_content) VALUES (%s, %s);', (doc_id, search_content))
-        self.response['data'] = True
-      except Exception:
-        self.response['error'] = "Error While Create Blog Entry...."
-        return self.response
-    
-    return self.response
-
-  def update_entry(self, entry_data):
-    self.response['error'] = None
-    if not entry_data['slug']:
-      entry_data['slug'] = re.sub('[^\w]+', '-', entry_data['title'].lower())
-    search_content = '\n'.join((entry_data['title'], entry_data['content']))
-    with get_db_cursor(commit=True) as cur:
-      try:
-        cur.execute('UPDATE entries SET title=%s, slug=%s, content=%s, author_id=%s WHERE id=%s;', (entry_data['title'], entry_data['slug'], entry_data['content'], entry_data['author_id'], entry_data['id']))
-        cur.execute('UPDATE fts_entries (doc_id, search_content) VALUES (%s, %s);', (entry_data['id'], search_content))
-        self.response['data'] = True
-      except Exception:
-        self.response['error'] = "Error While Update Entry...."
-        return self.response
-    return self.response
-
-  def get_all_entries(self, published=False):
-    self.response['error'] = None
-    with get_db_cursor() as cur:
-      try:
-        cur.execute("SELECT row_to_json(blog_entries) FROM (SELECT * FROM entries WHERE published=%s) AS blog_entries;", (published))
-        self.response['data'] = cur.fetchall()
-      except Exception:
-        self.response['error'] = "Error While Get Entries...."
-        return self.response
-    return self.response
-
-  def get_single_entries_by_id(self, doc_id):
-    self.response['error'] = None
-    entry = None
-    with get_db_cursor() as cur:
-      try:
-        cur.execute("SELECT row_to_json(entry) FROM (SELECT * FROM entries WHERE id = %s) AS entry;", (doc_id,))
-        entry = cur.fetchone()
-      except Exception:
-        self.response['error'] = "Error While Get Entry...."
-        return self.response
-    if entry is None:
-      self.response['error'] = "Entry Not Found Or Deleted...."
-    else:
-      self.response['data'] = entry
-    return self.response
-
-  def get_single_entries_by_slug(self, slug):
-    self.response['error'] = None
-    entry = None
-    with get_db_cursor() as cur:
-      try:
-        cur.execute("SELECT row_to_json(entry) FROM (SELECT * FROM entries WHERE slug = %s) AS entry;", (slug))
-        entry = cur.fetchone()
-      except Exception:
-        self.response['error'] = "Error While Get Entry...."
-        return self.response
-    if entry is None:
-      self.response['error'] = "Entry Not Found Or Deleted...."
-    else:
-      self.response['data'] = entry
-    return self.response
-
-  def delete_entry_by_id(self, doc_id):
-    self.response['error'] = None
-    with get_db_cursor() as cur:
-      try:
-        cur.execute("DELETE FROM entries WHERE id = %s;", (doc_id,))
-        self.response['data'] = True
-      except Exception:
-        self.response['error'] = "Error While Delete Entry...."
-        return self.response
-    return self.response
-
-  def delete_entry_by_slug(self, slug):
-    self.response['error'] = None
-    with get_db_cursor() as cur:
-      try:
-        cur.execute("DELETE FROM entries WHERE slug = %s;", (slug,))
-        self.response['data'] = True
-      except Exception:
-        self.response['error'] = "Error While Delete Entry...."
-        return self.response
-    return self.response
+def delete_blog_entry(doc_id):
+  response = {'error': None, 'data': None}
+  with get_db_cursor(commit=True) as cur:
+    cur.execute("DELETE FROM entries WHERE id = %s;", (doc_id,))
+    cur.execute("DELETE FROM fts_entries WHERE doc_id = %s;", (doc_id,))
+    response['data'] = True
+  return response

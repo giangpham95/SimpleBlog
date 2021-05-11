@@ -21,12 +21,46 @@
           <td>{% if entry['published'] %}Yes{% else %}No{% endif %}</td>
           <td>
             {% if entry['published'] %}<a href="{{url_for('entry_detail', slug=entry['slug'])}}">Preview</a> |{% endif %}
-            <a href="{{url_for('edit_entry', slug=entry.slug)}}">Edit</a> |
-            <a href="#">Delete <span><i class="fas fa-trash"></i></span></a>
+            <a href="{{url_for('edit_entry', slug=entry.slug)}}">Edit <span><i class="fas fa-pencil-alt"></i></span></a> |
+            <a href="#" data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" data-delete="{{url_for('delete_entry',id=entry['id'])}}">Delete <span><i class="fas fa-trash"></i></span></a>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+  {% else %}
+    <p>There is no entries to show.</p>
   {% endif %}
+
+  <div id="deleteConfirmModal" role="dialog" class="modal fade" tabindex="-1" aria-labelledby="deleteConfirmModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5>Delete Confirm ?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure to delete the selected entry?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <a href="#" role="button" class="btn btn-primary" id='deleteButton'>Delete</a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block additional_js %}
+<script type="text/javascript">
+  var deleteConfirmModal = document.getElementById('deleteConfirmModal');
+  var deleteButton = document.getElementById('deleteButton');
+  deleteConfirmModal.addEventListener('show.bs.modal', function(event) {
+    var a = event.relatedTarget;
+    var url = a.getAttribute('data-delete');
+    console.log(url)
+    //var url = "{{url_for('delete_entry', id=" + doc_id + ")}}"
+    deleteButton.setAttribute('href', url);
+  });
+</script>
 {% endblock %}

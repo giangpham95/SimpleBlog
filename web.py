@@ -1,4 +1,4 @@
-from blog import get_all_draft_entries, get_all_entries, get_all_published_entries, get_blog_entry_by_slug, new_blog_entry
+from blog import delete_blog_entry, get_all_draft_entries, get_all_entries, get_all_published_entries, get_blog_entry_by_slug, new_blog_entry, update_blog_entry
 from auth import login_required, login_user, register_user
 import json
 from flask import Flask, render_template, request, redirect, abort, session
@@ -101,10 +101,30 @@ def new_entry():
 @app.route('/<slug>/edit_entry/', methods=['GET', 'POST'])
 @login_required
 def edit_entry(slug):
-  response = get_blog_entry_by_slug(slug)
-  if response['error']:
+  lookup_response = get_blog_entry_by_slug(slug)
+  if lookup_response['error']:
     abort(404)
-  return render_template('blogs/edit_entry.html', meta_title="Edit Entry", entry=response['data'])
+  entry = lookup_response['data']
+  if request.method == "POST":
+    title = request.form.get('title', None)
+    content = request.form.get('content', None)
+    published = 'published' in request.form
+    if not (title and content):
+      flash("Title and Content are required", 'danger')
+    else:
+      if entry['author_id'] != session.get('user').get('id'):
+        flash('You have no right editing this entries')
+        abort(403)
+      response = update_blog_entry(entry['id'], title, content, published)
+      if response['error']:
+        flash(response['error'], 'danger')
+      else:
+        flash('Successful Save Entry.', 'success')
+        if published:
+          return redirect(url_for('entry_detail', slug=response['data'].get('slug')))
+        else:
+          return redirect(url_for('edit_entry', slug=response['data'].get('slug')))
+  return render_template('blogs/edit_entry.html', meta_title="Edit Entry", entry=entry)
 
 @app.route('/<slug>/', methods=['GET', 'POST'])
 def entry_detail(slug):
@@ -130,6 +150,28 @@ def all_entries():
   current_user = session.get('user')
   response = get_all_entries(current_user.get('id'))
   return render_template('blogs/list_entries.html', meta_title="All Blog Entries", entries=response['data'], content_title="Your Blog Entries")
+
+@app.route('/delete_entry?id=<id>')
+@login_required
+def delete_entry(id):
+  entry = None
+  with db.get_db_cursor(commit=False) as cur:
+    cur.execute("SELECT * FROM entries WHERE id = %s;", (id,))
+    entry = cur.fetchone()
+  if entry is None:
+    flash('Entry Not Found...')
+  else:
+    if entry['author_id'] != session.get('user').get('id'):
+      flash('You do not have authorization to perform task', 'warning')
+      abort(403)
+    else:
+      response = delete_blog_entry(id)
+      if response['error']:
+        flash('Unable to perform task', 'danger')
+        abort(500)
+      else:
+        flash('You have successfully delete the entry.', 'success')
+  return redirect(url_for('all_entries'))
 
 @app.errorhandler(404)
 def not_found(error):
