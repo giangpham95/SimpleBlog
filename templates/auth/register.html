@@ -11,7 +11,7 @@
                 <h3 class="mb-0">Register</h3>
               </div>
               {% for category, message in get_flashed_messages(with_categories=True) %}
-              <div class="alert alert-{{category}} alert-dismissable fade show" role="alert">
+              <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 <p>{{message}}</p>
               </div>

@@ -1,11 +1,9 @@
-from blog import delete_blog_entry, get_all_draft_entries, get_all_entries, get_all_published_entries, get_blog_entry_by_slug, new_blog_entry, update_blog_entry
-from auth import login_required, login_user, register_user
-import json
+import blog
+from auth import load_user, login_required, login_user, register_user, update_password, update_user_profile
 from flask import Flask, render_template, request, redirect, abort, session
 import os
 from flask.helpers import flash, url_for
 from urllib.parse import urlencode
-import datetime
 
 import db
 
@@ -70,10 +68,76 @@ def logout():
   session.pop('user')
   return redirect(url_for('index'))
 
+@app.route('/profile/<username>/')
+@login_required
+def profile(username):
+  current_user = session.get('user')
+  if username == current_user.get('username'):
+    profile = current_user
+  else:
+    role = current_user.get('role')
+    if role != 'owner' or role != 'admin':
+      abort(403)  
+    profile = load_user(username)
+  return render_template('users/profile.html', profile=profile, meta_title="Profile")
+
+@app.route('/profile/<username>/update', methods=['GET', 'POST'])
+@login_required
+def update_profile(username):
+  current_user = session.get('user')
+  profile = None
+  if username == current_user.get('username'):
+    profile = current_user
+  else:
+    role = current_user.get('role')
+    if role != 'owner' or role != 'admin':
+      abort(403)  
+    profile = load_user(username)
+  if request.method == 'POST':
+    new_username = request.form.get('username')
+    new_email = request.form.get('email')
+    new_nickname = request.form.get('nickname')
+    if new_username is None:
+      flash("Username is required", 'warning')
+    if new_email is None:
+      flash("Email is required")
+    if new_nickname is None:
+      flash('Nickname is required')
+    response = update_user_profile(username, new_nickname, new_username, new_email)
+    if response['error']:
+      flash(response['error'], 'danger')
+    else:
+      return redirect(url_for('profile', username=new_username))
+  if profile is None:
+    abort(404)
+  
+  return render_template('users/update_profile.html', username=username, profile=profile, meta_title="Update Profile")
+
+@app.route('/profile/<username>/change-password/', methods=['GET','POST'])
+@login_required
+def change_password(username):
+  if request.method == 'POST':
+    if username != session.get('user').get('username') or session.get('user').get('role') != 'owner':
+      abort(403)
+    old_pass = request.form.get('old_pass', '')
+    new_pass = request.form.get('new_pass', '')
+    new_pass_again = request.form.get('new_pass_again', '')
+    if not old_pass:
+      flash('Old pass is require', 'danger')
+    if not new_pass or not new_pass_again:
+      flash('New pass is require', 'danger')
+    response = update_password(username, old_pass, new_pass, new_pass_again)
+    if response['error']:
+      flash(response['error'], 'danger')
+    else:
+      flash('Successfully Update Password', 'success')
+      return redirect(url_for('profile', username=username))
+  return render_template('users/change_password.html', username=username, meta_title="Change Password")
+
 @app.route('/')
 @app.route('/index/')
 def index():
-  response = get_all_published_entries()
+  response = blog.get_all_published_entries()
   return render_template('index.html', entries=response['data'])
 
 @app.route('/new_entry/', methods=['GET', 'POST'])
@@ -87,7 +151,7 @@ def new_entry():
     if not (title and content):
       flash("Title and Content are required", 'danger')
     else:
-      response = new_blog_entry(title, content, current_user.get('id'), published=published)
+      response = blog.new_blog_entry(title, content, current_user.get('id'), published=published)
       if response['error']:
         flash(response['error'], 'danger')
       else:
@@ -101,7 +165,7 @@ def new_entry():
 @app.route('/<slug>/edit_entry/', methods=['GET', 'POST'])
 @login_required
 def edit_entry(slug):
-  lookup_response = get_blog_entry_by_slug(slug)
+  lookup_response = blog.get_blog_entry_by_slug(slug)
   if lookup_response['error']:
     abort(404)
   entry = lookup_response['data']
@@ -115,7 +179,7 @@ def edit_entry(slug):
       if entry['author_id'] != session.get('user').get('id'):
         flash('You have no right editing this entries')
         abort(403)
-      response = update_blog_entry(entry['id'], title, content, published)
+      response = blog.update_blog_entry(entry['id'], title, content, published)
       if response['error']:
         flash(response['error'], 'danger')
       else:
@@ -128,27 +192,27 @@ def edit_entry(slug):
 
 @app.route('/<slug>/', methods=['GET', 'POST'])
 def entry_detail(slug):
-  response = get_blog_entry_by_slug(slug)
+  response = blog.get_blog_entry_by_slug(slug)
   return render_template('blogs/entry_detail.html', meta_title="Entry Detail", entry=response['data'])
 
 @app.route('/drafts/')
 @login_required
 def draft_entries():
   current_user = session.get('user')
-  response = get_all_draft_entries(current_user.get('id'))
+  response = blog.get_all_draft_entries(current_user.get('id'))
   return render_template('blogs/list_entries.html', meta_title='Draft Blog Entries', entries=response['data'])
 
 @app.route('/published/')
 @login_required
 def published_entries():
-  response = get_all_published_entries()
+  response = blog.get_all_published_entries(session.user['id'])
   return render_template('blogs/list_entries.html', meta_title='Published Blog Entries', entries=response['data'])
 
 @app.route('/entries/')
 @login_required
 def all_entries():
   current_user = session.get('user')
-  response = get_all_entries(current_user.get('id'))
+  response = blog.get_all_entries(current_user.get('id'))
   return render_template('blogs/list_entries.html', meta_title="All Blog Entries", entries=response['data'], content_title="Your Blog Entries")
 
 @app.route('/delete_entry?id=<id>')
@@ -165,7 +229,7 @@ def delete_entry(id):
       flash('You do not have authorization to perform task', 'warning')
       abort(403)
     else:
-      response = delete_blog_entry(id)
+      response = blog.delete_blog_entry(id)
       if response['error']:
         flash('Unable to perform task', 'danger')
         abort(500)

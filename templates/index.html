@@ -3,9 +3,7 @@
 {% block content_title %}Blog Entries{% endblock %}
 
 {% block content %}
-{{session.user}}
   {% if entries %}
-    {{entries}}
     {% for entry in entries %}
     <h3>
       <a href="{% if entry.published %}{{ url_for('entry_detail', slug=entry.slug) }}{% else %}{{ url_for('edit_entry', slug=entry.slug) }}{% endif %}">

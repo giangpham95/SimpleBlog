@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content_title %}
+  {{profile['nickname']}}'s Profile
+  <a href="{{url_for('update_profile', username=profile['username'])}}"><span><i class="fas fa-user-edit"></i></span></a>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-2">
+  <div class="col col-sm-2">
+    <strong>Nickname: </strong>
+  </div>
+  <div class="col col-sm-10">{{profile['nickname']}}</div>
+</div>
+<div class="row mb-2">
+  <div class="col col-sm-2">
+    <strong>Username: </strong>
+  </div>
+  <div class="col col-sm-10">{{profile['username']}}</div>
+</div>
+<div class="row mb-2">
+  <div class="col col-sm-2">
+    <strong>Email: </strong>
+  </div>
+  <div class="col col-sm-10">{{profile['email']}}</div>
+</div>
+<div class="row mb-2">
+  <div class="col col-sm-2">
+    <strong>Password: </strong>
+  </div>
+  <div class="col col-sm-10">
+    <a href="{{ url_for('change_password', username=profile['username']) }}">
+      <span><i class="far fa-edit"></i></span> Change Password
+    </a>
+  </div>
+</div>
+{% endblock %}
