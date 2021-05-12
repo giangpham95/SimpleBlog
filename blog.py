@@ -109,3 +109,20 @@ def delete_blog_entry(doc_id):
     cur.execute("DELETE FROM fts_entries WHERE doc_id = %s;", (doc_id,))
     response['data'] = True
   return response
+
+def search_entry(query, published=None):
+  response = {'error': None, 'data': None}
+  # Fine document id match query
+  ids = ''
+  with get_db_cursor(commit=False) as cur:
+    if published is None:
+      cur.execute("SELECT doc_id FROM fts_entries WHERE search_content LIKE '%" + query + "%';")
+      for row in cur.fetchall():
+        ids += "'" + row['doc_id'] + "',"
+    else:
+      cur.execute("SELECT doc_id FROM fts_entries WHERE published=%s AND search_content LIKE '%" + query + "%';", (published))
+      for row in cur.fetchall():
+        ids += "'" + row['doc_id'] + "',"
+    cur.execute("SELECT * FROM entries WHERE id IN (%s)", (ids,))
+    response['data'] = cur.fetchall()
+  return response

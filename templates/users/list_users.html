@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content_title %}{{content_title}}{% endblock %}
+
+{% block content %}
+  {% if users %}
+  {{session.user}}
+    <table class="table table-bordered table-striped table-hover">
+      <thead>
+        <tr class="table-dark">
+          <th scope="col">Username</th>
+          <th scope="col">Nickname</th>
+          <th scope="col">Role</th>
+          <th scope="col">Email</th>
+          {% if session.user and session.user.role == "owner"%}
+          <th scope="col">Actions</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{user['username']}}</td>
+          <td>{{user['nickname']}}</td>
+          <td>{{user['role']}}</td>
+          <td>{{user['email']}}</td>
+          {% if session.user and session.user.role == 'owner'%}
+          <td>
+            <a href="{{url_for('update_profile', username=user['username'])}}"><span><i class="fas fa-pencil-alt" aria-hidden="true"></i></span> Edit</a> |
+            <a href="#" data-bs-toggle="modal" data-bs-target="#deleteUserConfirmModal" data-delete="{{url_for('delete_profile',username=user['username'])}}"><span><i class="fas fa-trash" aria-hidden="true"></i></span> Delete</a>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>There is no entries to show.</p>
+  {% endif %}
+
+  <div id="deleteUserConfirmModal" role="dialog" class="modal fade" tabindex="-1" aria-labelledby="deleteConfirmModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5>Delete Confirm ?</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure to delete the selected entry?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <a href="#" role="button" class="btn btn-primary" id='deleteButton'>Delete</a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block additional_js %}
+<script type="text/javascript">
+  var deleteUserConfirmModal = document.getElementById('deleteUserConfirmModal');
+  var deleteButton = document.getElementById('deleteButton');
+  deleteUserConfirmModal.addEventListener('show.bs.modal', function(event) {
+    var a = event.relatedTarget;
+    var url = a.getAttribute('data-delete');
+    console.log(url)
+    //var url = "{{url_for('delete_entry', id=" + doc_id + ")}}"
+    deleteButton.setAttribute('href', url);
+  });
+</script>
+{% endblock %}

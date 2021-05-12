@@ -1,5 +1,5 @@
 import blog
-from auth import load_user, login_required, login_user, register_user, update_password, update_user_profile
+from auth import delete_user_profile, get_all_users, load_user, login_required, login_user, register_user, update_password, update_user_profile
 from flask import Flask, render_template, request, redirect, abort, session
 import os
 from flask.helpers import flash, url_for
@@ -134,6 +134,23 @@ def change_password(username):
       return redirect(url_for('profile', username=username))
   return render_template('users/change_password.html', username=username, meta_title="Change Password")
 
+@app.route('/profile/<username>/delete')
+@login_required
+def delete_profile(username):
+  current_user =  session.get('user')
+  if current_user.get('role') != 'admin' or current_user.get('role') != 'owner':
+    abort(403)
+  else:
+    delete_user_profile(username)
+    return redirect(url_for('list_users'))
+
+@app.route('/profiles/')
+@login_required
+def list_users():
+  #users = None
+  response = get_all_users()
+  return render_template('users/list_users.html', users=response['data'])
+
 @app.route('/')
 @app.route('/index/')
 def index():
@@ -205,7 +222,7 @@ def draft_entries():
 @app.route('/published/')
 @login_required
 def published_entries():
-  response = blog.get_all_published_entries(session.user['id'])
+  response = blog.get_all_published_entries(session.get('user').get('id'))
   return render_template('blogs/list_entries.html', meta_title='Published Blog Entries', entries=response['data'])
 
 @app.route('/entries/')
@@ -236,6 +253,12 @@ def delete_entry(id):
       else:
         flash('You have successfully delete the entry.', 'success')
   return redirect(url_for('all_entries'))
+
+@app.route('/search', methods=['POST'])
+def search_entries():
+  query = request.form.get('search')
+  response = blog.search_entry(query)
+  return render_template('search_result.html', entries=response['data'])
 
 @app.errorhandler(404)
 def not_found(error):

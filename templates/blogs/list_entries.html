@@ -3,6 +3,16 @@
 {% block content_title %}{{content_title}}{% endblock %}
 
 {% block content %}
+  <div class="dropdown mb-5">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+      <span><i class="fas fa-filter"></i></span> Filter
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+      <li><a class="dropdown-item" href="{{url_for('all_entries')}}">All Entries</a></li>
+      <li><a class="dropdown-item" href="{{url_for('published_entries')}}">Published</a></li>
+      <li><a class="dropdown-item" href="{{url_for('draft_entries')}}">Drafts</a></li>
+    </ul>
+  </div>
   {% if entries %}
     <table class="table table-bordered table-striped table-hover">
       <thead>

@@ -34,7 +34,8 @@ def login_user(login_username, password):
     response['error'] = "Incorrect Password...."
     return response
   
-  response['data'] = user.pop('password_hash')
+  user.pop('password_hash')
+  response['data'] = user
   return response
 
 def validate_email(email):
@@ -130,4 +131,18 @@ def update_user_profile(old_username, nickname, username, email):
   with db.get_db_cursor(commit=True) as cur:
     cur.execute("UPDATE users SET nickname=%s, username=%s, email=%s WHERE username=%s;", (nickname, username, email, old_username,))
     response['data'] = True
+  return response
+
+def delete_user_profile(username):
+  response = {'error': None, 'data': None}
+  with db.get_db_cursor(commit=True) as cur:
+    cur.execute("DELETE FROM users WHERE username=%s;", username)
+    response['data'] = True
+  return response
+
+def get_all_users():
+  response = {'error': None, 'data': None}
+  with db.get_db_cursor(commit=False) as cur:
+    cur.execute("SELECT * FROM users;")
+    response['data'] = cur.fetchall()
   return response

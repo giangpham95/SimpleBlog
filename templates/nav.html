@@ -6,14 +6,11 @@
         <li class="nav-item">
           <a class="nav-link" href="{{url_for('all_entries')}}">Your Entries</a>
         </li>
-        {% if session.user and (session.user['role'] == 'owner' or session.user['role'] == 'admin') %}
+        {% if session.user %}
         <li class="nav-item">
-          <a class="nav-link" href="#">Users</a>
+          <a class="nav-link" href="{{url_for('list_users')}}">Users</a>
         </li>
         {% endif %}
-        <li class="nav-item">
-          <a class="nav-link" href="#">Settings</a>
-        </li>
         <li class="nav-item">
           <a class="nav-link" href="{{url_for('new_entry')}}">New Entry</a>
         </li>
@@ -31,8 +28,8 @@
         {% endif %}
       </ul>
     </div>
-    <form class="d-flex">
-      <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+    <form class="d-flex" method="GET" action="{{url_for('search_entries')}}">
+      <input class="form-control me-2" name="search" id="search" type="search" placeholder="Search" aria-label="Search">
       <button class="btn btn-outline-success" type="submit">Search</button>
     </form>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
